@@ -137,7 +137,7 @@ namespace Carrier_storage_system
 
         private void Size_Check()
         {
-            if (Int32.Parse(ProductWeight.Text) > 60)
+            if (Int32.Parse(ProductWeight.Text) > 100)
             {
                 MessageBox.Show("무게 초과");
                 empty_check = false;
@@ -303,9 +303,7 @@ namespace Carrier_storage_system
                             }
                         }
                     }
-
                 }
-
             }
             catch (Exception e)
             {
