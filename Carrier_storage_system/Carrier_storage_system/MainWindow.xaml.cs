@@ -27,8 +27,6 @@ namespace Carrier_storage_system
         private string y_value;
         private string z_value;
 
-        private int work_qty = 0;
-
         private bool empty_check = false;
 
         string con = "DATA SOURCE = orcl; USER ID = scott; PASSWORD = 1234";
@@ -50,6 +48,7 @@ namespace Carrier_storage_system
             cmd = new OracleCommand();
             ds = new DataSet();
             Weight_Check();
+            Work_List();
         }
 
         private void Insert_btn_Click(object sender, RoutedEventArgs e)
@@ -84,6 +83,57 @@ namespace Carrier_storage_system
         }
 
 
+        private void Work_List()
+        {
+            conn.Open();
+            try
+            {
+                int today_work = 0;
+                for (int i = 1; i < 6; i++)
+                {
+                    dt = new DataTable();
+                    ds = new DataSet();
+
+                    string sql = $"Select count(*) " +
+                        $"From WORK_TB " +
+                        $"Where y = {i} " +
+                        $"And WORK_DT = TO_CHAR(SYSDATE, 'yyyymmdd')";
+
+                    ad = new OracleDataAdapter(sql, conn);
+                    ad.Fill(ds, "work_tb");
+                    dt = ds.Tables["work_tb"];
+
+                    if (Int32.Parse(dt.Rows[0]["COUNT(*)"].ToString()) > 0)
+                    {
+                        today_work = Int32.Parse(dt.Rows[0]["COUNT(*)"].ToString());
+                        switch (i)
+                        {
+                            case 1:
+                                Day_work1.Text = today_work.ToString() + " 개";
+                                break;
+                            case 2:
+                                Day_work2.Text = today_work.ToString() + " 개";
+                                break;
+                            case 3:
+                                Day_work3.Text = today_work.ToString() + " 개";
+                                break;
+                            case 4:
+                                Day_work4.Text = today_work.ToString() + " 개";
+                                break;
+                            case 5:
+                                Day_work5.Text = today_work.ToString() + " 개";
+                                break;
+                        }
+                    }
+                }
+                
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
+            conn.Close();
+        }
 
         private void Size_Check()
         {
@@ -119,10 +169,23 @@ namespace Carrier_storage_system
 
         private void Weight_Check()
         {
+            int work_qty = 0;
+
+            int one_qty = 0;
+            int two_qty = 0;
+            int three_qty = 0;
+            int four_qty = 0;
+            int five_qty = 0;
+
+            int one_weight = 0;
+            int two_weight = 0;
+            int three_weight = 0;
+            int four_weight = 0;
+            int five_weight = 0;
+
             conn.Open();
             try
             {
-
                 for (int i = 1; i < 6; i++)
                 {
                     for (int j = 1; j < 5; j++)
@@ -130,14 +193,10 @@ namespace Carrier_storage_system
                         dt = new DataTable();
                         ds = new DataSet();
 
-                        string num;
-                        int qty;
-                        int text_num;
-
                         string sql = $"Select count(*), sum(weight), y, z " +
                             $"From WORK_TB " +
                             $"WHERE Y = {i} " +
-                            $"And Z = {j}" +
+                            $"And Z = {j} " +
                             $"Group By y, z";
 
                         ad = new OracleDataAdapter(sql, conn);
@@ -146,25 +205,27 @@ namespace Carrier_storage_system
 
                         if (dt.Rows.Count > 0)
                         {
-                            qty = 20 - Int32.Parse(dt.Rows[0]["COUNT(*)"].ToString());
-                            num = dt.Rows[0]["SUM(WEIGHT)"].ToString();
-                            text_num = 1200 - Int32.Parse(num);
                             switch (i)
                             {
                                 case 1:
-                                    OneFloor.Text = text_num.ToString() + "KG / " + qty.ToString();
+                                    one_qty += Int32.Parse(dt.Rows[0]["COUNT(*)"].ToString());
+                                    one_weight += Int32.Parse(dt.Rows[0]["SUM(WEIGHT)"].ToString());
                                     break;
                                 case 2:
-                                    TwoFloor.Text = text_num.ToString() + "KG / " + qty.ToString();
+                                    two_qty += Int32.Parse(dt.Rows[0]["COUNT(*)"].ToString());
+                                    two_weight += Int32.Parse(dt.Rows[0]["SUM(WEIGHT)"].ToString());
                                     break;
                                 case 3:
-                                    ThreeFloor.Text = text_num.ToString() + "KG / " + qty.ToString();
+                                    three_qty += Int32.Parse(dt.Rows[0]["COUNT(*)"].ToString());
+                                    three_weight += Int32.Parse(dt.Rows[0]["SUM(WEIGHT)"].ToString());
                                     break;
                                 case 4:
-                                    FourFloor.Text = text_num.ToString() + "KG / " + qty.ToString();
+                                    four_qty += Int32.Parse(dt.Rows[0]["COUNT(*)"].ToString());
+                                    four_weight += Int32.Parse(dt.Rows[0]["SUM(WEIGHT)"].ToString());                                    
                                     break;
                                 case 5:
-                                    FiveFloor.Text = text_num.ToString() + "KG / " + qty.ToString();
+                                    five_qty += Int32.Parse(dt.Rows[0]["COUNT(*)"].ToString());
+                                    five_weight += Int32.Parse(dt.Rows[0]["SUM(WEIGHT)"].ToString());
                                     break;
                             }
                             work_qty += Int32.Parse(dt.Rows[0]["COUNT(*)"].ToString());
@@ -178,6 +239,13 @@ namespace Carrier_storage_system
             }
             EmptyQty_txt.Text = (100 - work_qty).ToString();
             InputQty_txt.Text = work_qty.ToString();
+
+            OneFloor.Text = (1200 - one_weight).ToString() + "KG / " + (20 - one_qty).ToString();
+            TwoFloor.Text = (1200 - two_weight).ToString() + "KG / " + (20 - two_qty).ToString();
+            ThreeFloor.Text = (1200 - three_weight).ToString() + "KG / " + (20 - three_qty).ToString();
+            FourFloor.Text = (1200 - four_weight).ToString() + "KG / " + (20 - four_qty).ToString();
+            FiveFloor.Text = (1200 - five_weight).ToString() + "KG / " + (20 - five_qty).ToString();
+
             conn.Close();
         }
 
@@ -192,7 +260,11 @@ namespace Carrier_storage_system
                     {
                         for (int k = 1; k < 6; k++)
                         {
+                            dt = new DataTable();
+                            ds = new DataSet();
+
                             string sql = $"Select PASS_NUM From WORK_TB Where x={k} And z={j} And y={i}";
+                            string sum = "";
                             cmd = new OracleCommand(sql, conn);
 
                             reader = cmd.ExecuteReader();
@@ -203,17 +275,20 @@ namespace Carrier_storage_system
                                 ad.Fill(ds, "weight_tb");
                                 dt = ds.Tables["weight_tb"];
 
-                                if (dt.Rows.Count > 0)
+                                if (dt.Rows[0]["SUM(WEIGHT)"].ToString() != null && dt.Rows[0]["SUM(WEIGHT)"].ToString() != "")
                                 {
-                                    string sum = dt.Rows[0]["SUM(WEIGHT)"].ToString();
-                                    if (Int32.Parse(ProductWeight.Text) + Int32.Parse(sum) < 300)
+                                    if (dt.Rows[0]["SUM(WEIGHT)"].ToString() != "" && dt.Rows[0]["SUM(WEIGHT)"].ToString() != null)
                                     {
-                                        x_value = k.ToString();
-                                        y_value = i.ToString();
-                                        z_value = j.ToString();
+                                        sum = dt.Rows[0]["SUM(WEIGHT)"].ToString();
+                                        if (Int32.Parse(ProductWeight.Text) + Int32.Parse(sum) < 300)
+                                        {
+                                            x_value = k.ToString();
+                                            y_value = i.ToString();
+                                            z_value = j.ToString();
 
-                                        conn.Close();
-                                        return;
+                                            conn.Close();
+                                            return;
+                                        }
                                     }
                                 }
                                 else
@@ -292,6 +367,9 @@ namespace Carrier_storage_system
                 MessageBox.Show(ex.Message);
             }
             conn.Close();
+
+            Weight_Check();
+            Work_List();
         }
 
         private void PLC_work()
